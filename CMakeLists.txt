@@ -1,34 +1,24 @@
-cmake_minimum_required(VERSION 3.5)
-project(myM5Stick)
+cmake_minimum_required(VERSION 3.11)
+project(project)
 
-set(CMAKE_CXX_STANDARD 17)
-set(CMAKE_CXX_STANDARD_REQUIRED ON)
-set(CMAKE_BUILD_TYPE Debug)
+include(FetchContent)
 
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fsanitize=address  -static-libasan")
-
-add_compile_options(-Wall -Wextra -pedantic -Werror  )
-
-include(cmake/GTest.cmake)
-
-include_directories(
-        ${GTEST_INCLUDE_DIRS}
-        ${GMOCK_INCLUDE_DIRS}
+FetchContent_Declare(
+    googletest
+    GIT_REPOSITORY https://github.com/google/googletest.git
+    GIT_TAG        master
 )
 
-add_executable(tests  unit_tests/test.cpp)
+FetchContent_GetProperties(googletest)
+if (NOT googletest_POPULATED)
+    FetchContent_Populate(googletest)
+    add_subdirectory(${googletest_SOURCE_DIR} ${googletest_BINARY_DIR})
+endif ()
 
-target_link_libraries(tests
-        gtest
-        gmock
-        gtest_main)
+add_definitions(-Wno-unused-variable)
+add_definitions(-Wno-unused-parameter)
+add_definitions(-Wall -Werror -pedantic -Wextra)
 
-set_property(TARGET tests PROPERTY CXX_STANDARD 17)
 
-#this is a bit of overkill, but it enables to run ctest
-enable_testing()
-
-add_test(
-        NAME allTests
-        COMMAND tests
-)
+add_executable(gtests unit_tests/gtestCheck.cpp)
+target_link_libraries(gtests gtest_main gmock_main)
