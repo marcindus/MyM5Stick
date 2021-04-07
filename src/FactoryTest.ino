@@ -18,38 +18,15 @@
 #include "fft.h"
 #include "DHT12.h"
 #include "WiFi.h"
+#include "Animation.h"
 
-extern const unsigned char Logodata[25600];
-extern const unsigned char error_48[4608];
-extern const unsigned char icon_ir[4608];
-extern const unsigned char icon_ble[4608];
-extern const unsigned char icon_wifi[4608];
-extern const unsigned char icon_ble_disconnect[4608];
-extern const unsigned char ImageData[768];
-extern const unsigned char stick1[12960];
-extern const unsigned char stick2[12960];
-extern const unsigned char stick3[12960];
-extern const unsigned char stick4[12960];
-extern const unsigned char stick5[12960];
-extern const unsigned char stick6[12960];
-extern const unsigned char stick7[12960];
-extern const unsigned char stick8[12960];
-extern const unsigned char stick9[12960];
-extern const unsigned char stick10[12960];
-extern const unsigned char stick11[12960];
-extern const unsigned char stick12[12960];
-extern const unsigned char stick13[12960];
-extern const unsigned char stick14[12960];
-extern const unsigned char stick15[12960];
-extern const unsigned char stick16[12960];
-extern const unsigned char stick17[12960];
-extern const unsigned char stick18[12960];
 const unsigned char* Animationptr[18] = {
   stick1,stick2,stick3,stick4,stick5,
   stick6,stick7,stick8,stick9,stick10,
   stick11,stick12,stick13,stick14,stick15,
   stick16,stick17,stick18
 };
+
 
 typedef struct point_3d
 {
@@ -383,60 +360,7 @@ bool checkBM8563()
     return true;
 }
 
-bool checkOUTIO()
-{
-    uint32_t sumadc1 = 0, sumadc2 = 0;
-    pinMode(26,INPUT);
-
-    for (int i = 0; i < 50; i++)
-    {
-        sumadc2 += analogRead(36);
-        delay(50);
-    }
-
-    sumadc1 = sumadc1 / 50;
-    sumadc2 = sumadc2 / 50;
-
-    sumadc1 = sumadc1 * 3300 / 4095 * 2;
-    sumadc2 = sumadc2 * 3300 / 4095 * 2;
-
-    printf("%d,%d\n", sumadc1, sumadc2);
-
-    if ( sumadc1 < 3000 )
-    {
-        ErrorMeg(0x61, "5V or 26 error");
-    }
-    if ( sumadc2 < 2500 )
-    {
-        ErrorMeg(0x62, "3V3 or 36 error");
-    }
-    return true;
-}
-
 DHT12 dht12;
-
-bool CheckGrove()
-{
-    float tmp = dht12.readTemperature();
-    float hum = dht12.readHumidity();
-    uint8_t count = 0;
-
-    for (int i = 0; i < 10; i++)
-    {
-        tmp = dht12.readTemperature();
-        hum = dht12.readHumidity();
-        if(( tmp > 50 )||( tmp < -20 )||( hum > 100 )||( hum == 0 ))
-        {
-            count ++;
-            if( count > 5 )
-            {
-                ErrorMeg(0x91, "Grove error");
-                return false;
-            }
-        }
-    }
-    return true;
-}
 
 void ColorBar()
 {
