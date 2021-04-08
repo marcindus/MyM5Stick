@@ -805,6 +805,23 @@ void DisplayMicro()
         delay(10);
     }
 }
+void MyDisplay()
+{
+    Disbuff.fillRect(0, 0, 160, 80, Disbuff.color565(0, 0, 0));
+    Displaybuff();
+    while ((!M5.BtnA.isPressed()) && (!M5.BtnB.isPressed()))
+    {
+        Disbuff.drawString("MY Display",32,5,1);
+        Displaybuff();
+        M5.update();
+    }
+    while ((M5.BtnA.isPressed()) || (M5.BtnB.isPressed()))
+    {
+        M5.update();
+        delay(10);
+    }
+}
+
 
 void DisplayRTC()
 {
@@ -1084,7 +1101,7 @@ void DisPlayBLESend()
             Disbuff.setTextSize(1);
             Disbuff.setCursor(12, 20);
             Disbuff.setTextColor(RED);
-            Disbuff.printf("BLE disconnect\n");
+            Disbuff.printf("BLE disconneXXct\n");
             Disbuff.setCursor(12, 35);
             Disbuff.setTextColor(Disbuff.color565(18,150,219));
             Disbuff.printf("BLE Name:M5-BLE\n");
@@ -1251,12 +1268,13 @@ uint8_t xData, yData;
 void loop()
 {
     delay(100);
+    MyDisplay();
     MPU6886Test();
     DisplayRTC();
     DisplayMicro();
     DisIRSend();
     DisPlayBLESend();
-    //DisplayWIFI();
+    DisplayWIFI();
     if (TestMode)
     {
         DisplayI2CENV();
