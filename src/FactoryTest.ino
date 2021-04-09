@@ -22,23 +22,25 @@
 #include "Geometry.h"
 #include "Arduino.h"
 
-
-#include "freertos/FreeRTOS.h"
-#include "esp_wifi.h"
-#include "esp_wifi_types.h"
-#include "esp_system.h"
-#include "esp_event.h"
-#include "esp_event_loop.h"
-#include "nvs_flash.h"
-#include "driver/gpio.h"
-
-
 const unsigned char* Animationptr[18] = {
   stick1,stick2,stick3,stick4,stick5,
   stick6,stick7,stick8,stick9,stick10,
   stick11,stick12,stick13,stick14,stick15,
   stick16,stick17,stick18
 };
+
+
+//// ----------------------------------------pasted from sniffer BEGIN
+#include "freertos/FreeRTOS.h"
+#include "esp_wifi.h"
+#include "esp_wifi_types.h"
+#include "esp_system.h"
+#include "esp_event.h"
+#include "esp_event_loop.h"
+//#include "nvs_flash.h"
+//#include "driver/gpio.h"
+
+
 
 #define WIFI_CHANNEL_SWITCH_INTERVAL  (500)
 #define WIFI_CHANNEL_MAX               (13)
@@ -133,6 +135,7 @@ void wifi_sniffer_packet_handler(void* buff, wifi_promiscuous_pkt_type_t type)
 
 
 
+//// ----------------------------------------pasted from sniffer END
 
 
 #define NUM_LEDS 3
@@ -911,7 +914,7 @@ void DisplayMicro()
         delay(10);
     }
 }
-void MyDisplay()
+void Sniffer()
 {
 
   Serial.begin(115200);
@@ -1390,7 +1393,7 @@ uint8_t xData, yData;
 void loop()
 {
     delay(100);
-    MyDisplay();
+    Sniffer();
     MPU6886Test();
     DisplayRTC();
     DisplayMicro();
