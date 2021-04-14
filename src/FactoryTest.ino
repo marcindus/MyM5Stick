@@ -21,6 +21,7 @@
 #include "Animation.h"
 #include "Geometry.h"
 #include "Arduino.h"
+#include "WifiSniffer.h"
 
 const unsigned char* Animationptr[18] = {
   stick1,stick2,stick3,stick4,stick5,
@@ -28,114 +29,6 @@ const unsigned char* Animationptr[18] = {
   stick11,stick12,stick13,stick14,stick15,
   stick16,stick17,stick18
 };
-
-
-//// ----------------------------------------pasted from sniffer BEGIN
-#include "freertos/FreeRTOS.h"
-#include "esp_wifi.h"
-#include "esp_wifi_types.h"
-#include "esp_system.h"
-#include "esp_event.h"
-#include "esp_event_loop.h"
-//#include "nvs_flash.h"
-//#include "driver/gpio.h"
-
-
-
-#define WIFI_CHANNEL_SWITCH_INTERVAL  (500)
-#define WIFI_CHANNEL_MAX               (13)
-
-uint8_t level = 0, channel = 1;
-
-static wifi_country_t wifi_country = {.cc="CN", .schan = 1, .nchan = 13}; //Most recent esp32 library struct
-
-typedef struct {
-  unsigned frame_ctrl:16;
-  unsigned duration_id:16;
-  uint8_t addr1[6]; /* receiver address */
-  uint8_t addr2[6]; /* sender address */
-  uint8_t addr3[6]; /* filtering address */
-  unsigned sequence_ctrl:16;
-  uint8_t addr4[6]; /* optional */
-} wifi_ieee80211_mac_hdr_t;
-
-typedef struct {
-  wifi_ieee80211_mac_hdr_t hdr;
-  uint8_t payload[0]; /* network data ended with 4 bytes csum (CRC32) */
-} wifi_ieee80211_packet_t;
-
-static esp_err_t event_handler(void *ctx, system_event_t *event);
-static void wifi_sniffer_init(void);
-static void wifi_sniffer_set_channel(uint8_t channel);
-static const char *wifi_sniffer_packet_type2str(wifi_promiscuous_pkt_type_t type);
-static void wifi_sniffer_packet_handler(void *buff, wifi_promiscuous_pkt_type_t type);
-
-esp_err_t event_handler(void *ctx, system_event_t *event)
-{
-  return ESP_OK;
-}
-
-void wifi_sniffer_init(void)
-{
-  nvs_flash_init();
-  tcpip_adapter_init();
-  ESP_ERROR_CHECK( esp_event_loop_init(event_handler, NULL) );
-  wifi_init_config_t cfg = WIFI_INIT_CONFIG_DEFAULT();
-  ESP_ERROR_CHECK( esp_wifi_init(&cfg) );
-  ESP_ERROR_CHECK( esp_wifi_set_country(&wifi_country) ); /* set country for channel range [1, 13] */
-  ESP_ERROR_CHECK( esp_wifi_set_storage(WIFI_STORAGE_RAM) );
-  ESP_ERROR_CHECK( esp_wifi_set_mode(WIFI_MODE_NULL) );
-  ESP_ERROR_CHECK( esp_wifi_start() );
-  esp_wifi_set_promiscuous(true);
-  esp_wifi_set_promiscuous_rx_cb(&wifi_sniffer_packet_handler);
-}
-
-void wifi_sniffer_set_channel(uint8_t channel)
-{
-  esp_wifi_set_channel(channel, WIFI_SECOND_CHAN_NONE);
-}
-
-const char * wifi_sniffer_packet_type2str(wifi_promiscuous_pkt_type_t type)
-{
-  switch(type) {
-  case WIFI_PKT_MGMT: return "MGMT";
-  case WIFI_PKT_DATA: return "DATA";
-  default:  
-  case WIFI_PKT_MISC: return "MISC";
-  }
-}
-
-void wifi_sniffer_packet_handler(void* buff, wifi_promiscuous_pkt_type_t type)
-{
-  if (type != WIFI_PKT_MGMT)
-    return;
-
-  const wifi_promiscuous_pkt_t *ppkt = (wifi_promiscuous_pkt_t *)buff;
-  const wifi_ieee80211_packet_t *ipkt = (wifi_ieee80211_packet_t *)ppkt->payload;
-  const wifi_ieee80211_mac_hdr_t *hdr = &ipkt->hdr;
-
-  printf("PACKET TYPE=%s, CHAN=%02d, RSSI=%02d,"
-    " ADDR1=%02x:%02x:%02x:%02x:%02x:%02x,"
-    " ADDR2=%02x:%02x:%02x:%02x:%02x:%02x,"
-    " ADDR3=%02x:%02x:%02x:%02x:%02x:%02x\n",
-    wifi_sniffer_packet_type2str(type),
-    ppkt->rx_ctrl.channel,
-    ppkt->rx_ctrl.rssi,
-    /* ADDR1 */
-    hdr->addr1[0],hdr->addr1[1],hdr->addr1[2],
-    hdr->addr1[3],hdr->addr1[4],hdr->addr1[5],
-    /* ADDR2 */
-    hdr->addr2[0],hdr->addr2[1],hdr->addr2[2],
-    hdr->addr2[3],hdr->addr2[4],hdr->addr2[5],
-    /* ADDR3 */
-    hdr->addr3[0],hdr->addr3[1],hdr->addr3[2],
-    hdr->addr3[3],hdr->addr3[4],hdr->addr3[5]
-  );
-}
-
-
-
-//// ----------------------------------------pasted from sniffer END
 
 
 #define NUM_LEDS 3
@@ -450,351 +343,12 @@ bool checkBM8563()
     return true;
 }
 
-DHT12 dht12;
 
-void ColorBar()
-{
-    float color_r, color_g, color_b;
 
-    color_r = 0;
-    color_g = 0;
-    color_b = 255;
 
-    for (int i = 0; i < 384; i=i+4)
-    {
-        if (i < 128)
-        {
-            color_r = i * 2;
-            color_g = 0;
-            color_b = 255 - (i * 2);
-        }
-        else if ((i >= 128) && (i < 256))
-        {
-            color_r = 255 - ((i - 128) * 2);
-            color_g = (i - 128) * 2;
-            color_b = 0;
-        }
-        else if ((i >= 256) && (i < 384))
-        {
-            color_r = 0;
-            color_g = 255 - ((i - 256) * 2);
-            ;
-            color_b = (i - 256) * 2;
-            ;
-        }
-        Disbuff.fillRect(0, 0, 160, 80, Disbuff.color565(color_r, color_g, color_b));
-        if (TestMode)
-        {
-            Disbuff.setTextColor(RED);
-            Disbuff.drawString("Test Mode", 0, 0, 1);
-        }
-        Displaybuff();
-    }
 
-    for (int i = 0; i < 4; i++)
-    {
-        switch (i)
-        {
-        case 0:
-            color_r = 0;
-            color_g = 0;
-            color_b = 0;
-            break;
-        case 1:
-            color_r = 255;
-            color_g = 0;
-            color_b = 0;
-            break;
-        case 2:
-            color_r = 0;
-            color_g = 255;
-            color_b = 0;
-            break;
-        case 3:
-            color_r = 0;
-            color_g = 0;
-            color_b = 255;
-            break;
-        }
-        for (int n = 0; n < 160; n++)
-        {
-            color_r = (color_r < 255) ? color_r + 1.6 : 255U;
-            color_g = (color_g < 255) ? color_g + 1.6 : 255U;
-            color_b = (color_b < 255) ? color_b + 1.6 : 255U;
-            Disbuff.drawLine(n, i * 20, n, (i + 1) * 20, Disbuff.color565(color_r, color_g, color_b));
-        }
-    }
-    if (TestMode)
-    {
-        Disbuff.setTextColor(RED);
-        Disbuff.drawString("Test Mode", 0, 0, 1);
-    }
-    Displaybuff();
-    delay(500);
 
-    for (int i = 0; i < 4; i++)
-    {
-        switch (i)
-        {
-        case 0:
-            color_r = 255;
-            color_g = 255;
-            color_b = 255;
-            break;
-        case 1:
-            color_r = 255;
-            color_g = 0;
-            color_b = 0;
-            break;
-        case 2:
-            color_r = 0;
-            color_g = 255;
-            color_b = 0;
-            break;
-        case 3:
-            color_r = 0;
-            color_g = 0;
-            color_b = 255;
-            break;
-        }
-        for (int n = 0; n < 160; n++)
-        {
-            color_r = (color_r > 2) ? color_r - 1.5 : 0U;
-            color_g = (color_g > 2) ? color_g - 1.5 : 0U;
-            color_b = (color_b > 2) ? color_b - 1.5 : 0U;
-            Disbuff.drawLine(159 - n, i * 20, 159 - n, (i + 1) * 20, Disbuff.color565(color_r, color_g, color_b));
-        }
-    }
-    Displaybuff();
-    delay(500);
-}
-double r_rand = PI / 180;
 
-double r_alpha = 19.47 * PI / 180;
-double r_gamma = 20.7 * PI / 180;
-
-double sin_alpha = sin(19.47 * PI / 180);
-double cos_alpha = cos(19.47 * PI / 180);
-double sin_gamma = sin(20.7 * PI / 180);
-double cos_gamma = cos(20.7 * PI / 180);
-
-bool point3Dto2D(point_3d_t *source, point_2d_t *point)
-{
-    point->x = (source->x * cos_gamma) - (source->y * sin_gamma);
-    point->y = -(source->x * sin_gamma * sin_alpha) - (source->y * cos_gamma * sin_alpha) + (source->z * cos_alpha);
-    return true;
-}
-
-bool point2DToDisPoint(point_2d_t *point, uint8_t *x, uint8_t *y)
-{
-    *x = point->x + 80;
-    *y = 40 - point->y;
-    return true;
-}
-
-bool printLine3D(TFT_eSprite *display, line_3d_t *line, uint32_t color)
-{
-    uint8_t start_x, start_y, end_x, end_y;
-    point_2d_t point;
-    point3Dto2D(&line->start_point, &point);
-    point2DToDisPoint(&point, &start_x, &start_y);
-    point3Dto2D(&line->end_point, &point);
-    point2DToDisPoint(&point, &end_x, &end_y);
-
-    display->drawLine(start_x, start_y, end_x, end_y, color);
-
-    return true;
-}
-
-void RotatePoint(point_3d_t *point, double x, double y, double z)
-{
-    if (x != 0)
-    {
-        point->y = point->y * cos(x * r_rand) - point->z * sin(x * r_rand);
-        point->z = point->y * sin(x * r_rand) + point->z * cos(x * r_rand);
-    }
-
-    if (y != 0)
-    {
-        point->x = point->z * sin(y * r_rand) + point->x * cos(y * r_rand);
-        point->z = point->z * cos(y * r_rand) - point->x * sin(y * r_rand);
-    }
-
-    if (z != 0)
-    {
-        point->x = point->x * cos(z * r_rand) - point->y * sin(z * r_rand);
-        point->y = point->x * sin(z * r_rand) + point->y * cos(z * r_rand);
-    }
-}
-
-void RotatePoint(point_3d_t* point, point_3d_t* point_new, double x, double y, double z)
-{
-    if (x != 0)
-    {
-        point_new->y = point->y * cos(x * r_rand) - point->z * sin(x * r_rand);
-        point_new->z = point->y * sin(x * r_rand) + point->z * cos(x * r_rand);
-    }
-
-    if (y != 0)
-    {
-        point_new->x = point->z * sin(y * r_rand) + point->x * cos(y * r_rand);
-        point_new->z = point->z * cos(y * r_rand) - point->x * sin(y * r_rand);
-    }
-
-    if (z != 0)
-    {
-        point_new->x = point->x * cos(z * r_rand) - point->y * sin(z * r_rand);
-        point_new->y = point->x * sin(z * r_rand) + point->y * cos(z * r_rand);
-    }
-}
-
-line_3d_t rect[12] = {
-    {.start_point = {-1, -1, 1}, .end_point = {1, -1, 1}},
-    {.start_point = {1, -1, 1}, .end_point = {1, 1, 1}},
-    {.start_point = {1, 1, 1}, .end_point = {-1, 1, 1}},
-    {.start_point = {-1, 1, 1}, .end_point = {-1, -1, 1}},
-    {
-        .start_point = {-1, -1, 1},
-        .end_point = {-1, -1, -1},
-    },
-    {
-        .start_point = {1, -1, 1},
-        .end_point = {1, -1, -1},
-    },
-    {
-        .start_point = {1, 1, 1},
-        .end_point = {1, 1, -1},
-    },
-    {
-        .start_point = {-1, 1, 1},
-        .end_point = {-1, 1, -1},
-    },
-    {.start_point = {-1, -1, -1}, .end_point = {1, -1, -1}},
-    {.start_point = {1, -1, -1}, .end_point = {1, 1, -1}},
-    {.start_point = {1, 1, -1}, .end_point = {-1, 1, -1}},
-    {.start_point = {-1, 1, -1}, .end_point = {-1, -1, -1}},
-};
-
-void MPU6886Test()
-{
-    float accX = 0;
-    float accY = 0;
-    float accZ = 0;
-
-    double theta = 0, last_theta = 0;
-    double phi = 0, last_phi = 0;
-    double alpha = 0.2;
-
-    line_3d_t x = {
-        .start_point = {0, 0, 0},
-        .end_point = {0, 0, 0}};
-    line_3d_t y = {
-        .start_point = {0, 0, 0},
-        .end_point = {0, 0, 0}};
-    line_3d_t z = {
-        .start_point = {0, 0, 0},
-        .end_point = {0, 0, 30}};
-
-    line_3d_t rect_source[12];
-    line_3d_t rect_dis;
-    for (int n = 0; n < 12; n++)
-    {
-        rect_source[n].start_point.x = rect[n].start_point.x * 15;
-        rect_source[n].start_point.y = rect[n].start_point.y * 15;
-        rect_source[n].start_point.z = rect[n].start_point.z * 15;
-        rect_source[n].end_point.x = rect[n].end_point.x * 15;
-        rect_source[n].end_point.y = rect[n].end_point.y * 15;
-        rect_source[n].end_point.z = rect[n].end_point.z * 15;
-    }
-
-    while ((!M5.BtnA.isPressed()) && (!M5.BtnB.isPressed()))
-    {
-
-        M5.MPU6886.getAccelData(&accX, &accY, &accZ);
-        if ((accX < 1) && (accX > -1))
-        {
-            theta = asin(-accX) * 57.295;
-        }
-        if (accZ != 0)
-        {
-            phi = atan(accY / accZ) * 57.295;
-        }
-
-        theta = alpha * theta + (1 - alpha) * last_theta;
-        phi = alpha * phi + (1 - alpha) * last_phi;
-
-        Disbuff.fillRect(0, 0, 160, 80, BLACK);
-        Disbuff.setTextSize(1);
-        Disbuff.setCursor(10, 55);
-        Disbuff.printf("%.2f", theta);
-        Disbuff.setCursor(10, 65);
-        Disbuff.printf("%.2f", phi);
-        //Displaybuff();
-        delay(20);
-
-        z.end_point.x = 0;
-        z.end_point.y = 0;
-        z.end_point.z = 30;
-        RotatePoint(&z.end_point, theta, phi, 0);
-        RotatePoint(&z.end_point, &x.end_point, -90, 0, 0);
-        RotatePoint(&z.end_point, &y.end_point, 0, 90, 0);
-
-        for (int n = 0; n < 12; n++)
-        {
-            RotatePoint(&rect_source[n].start_point, &rect_dis.start_point, theta, phi, (double)0);
-            RotatePoint(&rect_source[n].end_point, &rect_dis.end_point, theta, phi, (double)0);
-            printLine3D(&Disbuff, &rect_dis, WHITE);
-        }
-        //Disbuff.fillRect(0,0,160,80,BLACK);
-        printLine3D(&Disbuff, &x, RED);
-        printLine3D(&Disbuff, &y, GREEN);
-        printLine3D(&Disbuff, &z, BLUE);
-        //Disbuff
-        Disbuff.setTextColor(WHITE);
-        Disbuff.setTextSize(1);
-        Disbuff.fillRect(0,0,52,18,Disbuff.color565(20,20,20));
-        Disbuff.drawString("MPU6886",5,5,1);
-        Displaybuff();
-
-        last_theta = theta;
-        last_phi = phi;
-
-        M5.update();
-    }
-    while ((M5.BtnA.isPressed()) || (M5.BtnB.isPressed()))
-    {
-        M5.update();
-        delay(10);
-    }
-}
-
-void DisplayI2CENV()
-{
-    Disbuff.fillRect(0, 0, 160, 80, Disbuff.color565(0, 0, 0));
-    Displaybuff();
-    float tmp;
-    float hum;
-    while ((!M5.BtnA.isPressed()) && (!M5.BtnB.isPressed()))
-    {
-        tmp = dht12.readTemperature();
-        hum = dht12.readHumidity();
-        Disbuff.fillRect(0, 0, 160, 80, BLACK);
-        Disbuff.setTextSize(3);
-        Disbuff.setCursor(5, 15);
-        Disbuff.printf("TMP:%2.1f", tmp);
-        Disbuff.setCursor(5, 45);
-        Disbuff.printf("HUM:%2.0f%%", hum);
-        Displaybuff();
-        M5.update();
-        delay(100);
-    }
-
-    while ((M5.BtnA.isPressed()) || (M5.BtnB.isPressed()))
-    {
-        M5.update();
-        delay(10);
-    }
-}
 
 SemaphoreHandle_t xSemaphore = NULL;
 SemaphoreHandle_t start_dis = NULL;
@@ -870,11 +424,6 @@ void Drawdisplay(void *arg)
                 }
 
                 Disbuff.drawPixel(count_x, count_y, Disbuff.color565(ImageData[colorPos * 3 + 0], ImageData[colorPos * 3 + 1], ImageData[colorPos * 3 + 2]));
-                /*
-        disbuff[ count_y * 160 + count_x ].r =  ImageData[ colorPos * 3 + 0 ];
-        disbuff[ count_y * 160 + count_x ].g =  ImageData[ colorPos * 3 + 1 ];
-        disbuff[ count_y * 160 + count_x ].b =  ImageData[ colorPos * 3 + 2 ];
-        */
             }
         }
         xSemaphoreGive(xSemaphore);
@@ -889,47 +438,8 @@ void Drawdisplay(void *arg)
 TaskHandle_t xhandle_display = NULL;
 TaskHandle_t xhandle_fft = NULL;
 
-void DisplayMicro()
-{
-    Disbuff.fillRect(0, 0, 160, 80, Disbuff.color565(0, 0, 0));
-    Disbuff.pushSprite(0, 0);
-
-    xSemaphoreGive(start_dis);
-    xSemaphoreGive(start_fft);
-    while ((!M5.BtnA.isPressed()) && (!M5.BtnB.isPressed()))
-    {
-        xSemaphoreGive(start_dis);
-        xSemaphoreGive(start_fft);
-        M5.update();
-        //delay(100);
-        xSemaphoreTake(start_dis, portMAX_DELAY);
-        xSemaphoreTake(start_fft, portMAX_DELAY);
-    }
-    //xSemaphoreTake( start_dis , portMAX_DELAY  );
-    //xSemaphoreTake( start_fft , portMAX_DELAY  );
-
-    while ((M5.BtnA.isPressed()) || (M5.BtnB.isPressed()))
-    {
-        M5.update();
-        delay(10);
-    }
-}
 void Sniffer()
 {
-
-  Serial.begin(115200);
-  delay(10);
-
-  wifi_sniffer_init();
-
-  //Serial.print("inside loop");
-  delay(1000); // wait for a second
-  vTaskDelay(WIFI_CHANNEL_SWITCH_INTERVAL / portTICK_PERIOD_MS);
-  wifi_sniffer_set_channel(channel);
-  channel = (channel % WIFI_CHANNEL_MAX) + 1;
-
-
-
 
 
     Disbuff.fillRect(0, 0, 160, 80, Disbuff.color565(0, 0, 0));
@@ -982,149 +492,6 @@ void DisplayRTC()
     }
 }
 
-void DisplayIOPort()
-{
-    i2s_pin_config_t pin_config;
-    pin_config.bck_io_num = I2S_PIN_NO_CHANGE;
-    pin_config.ws_io_num = 33;
-    pin_config.data_out_num = I2S_PIN_NO_CHANGE;
-    pin_config.data_in_num = PIN_DATA;
-    i2s_set_pin(I2S_NUM_0,&pin_config);
-    
-    i2s_driver_uninstall(I2S_NUM_0);
-    gpio_reset_pin(GPIO_NUM_0);
-    gpio_reset_pin(GPIO_NUM_26);
-
-    pinMode(26,OUTPUT);
-    pinMode(0,OUTPUT);
-
-    digitalWrite(0,1);
-    digitalWrite(26,1);
-    uint16_t pin36_adc = analogRead(36);
-
-    Disbuff.setTextSize(2);
-    Disbuff.setCursor(6, 25);
-    Disbuff.setTextColor(WHITE);
-
-    uint8_t count = 0;
-
-    while ((!M5.BtnA.isPressed()) && (!M5.BtnB.isPressed()))
-    {
-        Disbuff.fillRect(0, 0, 160, 80, BLACK);
-        Disbuff.setTextSize(2);
-
-        digitalWrite(0,0);
-        digitalWrite(26,0);
-        count = 0;
-
-        for( int i = 0 ; i< 10; i++ )
-        {
-            digitalWrite( 0, i%2 );
-            delay(10);
-            pin36_adc = analogRead(36);
-            if(( pin36_adc > 1800 )&&( i%2 == 1 ))
-            {
-                count ++;
-            }
-        }
-
-        Disbuff.setCursor(5, 5);
-        if( count >= 5 )
-        {
-            Disbuff.setTextColor(GREEN);
-            Disbuff.printf("%d G0 OK", count);
-        }
-        else
-        {
-            Disbuff.setTextColor(RED);
-            Disbuff.printf("%d G0 faild", count);
-        }
-        Disbuff.setTextColor(WHITE);
-        
-        digitalWrite(0,0);
-        digitalWrite(26,0);
-        count = 0;
-
-        for( int i = 0 ; i< 10; i++ )
-        {
-            digitalWrite( 26, i%2 );
-            delay(10);
-            pin36_adc = analogRead(36);
-            if(( pin36_adc > 1800 )&&( i%2 == 1 ))
-            {
-                count ++;
-            }
-        }
-
-        Disbuff.setCursor(5, 20);
-        if( count >= 5 )
-        {
-            Disbuff.setTextColor(GREEN);
-            Disbuff.printf("%d G26 OK", count);
-        }
-        else
-        {
-            Disbuff.setTextColor(RED);
-            Disbuff.printf("%d G26 faild", count);
-        }
-        Disbuff.setTextColor(WHITE);
-
-        digitalWrite(0,0);
-        digitalWrite(26,0);
-        delay(10);
-        pin36_adc = analogRead(36);
-
-        Disbuff.setCursor(5, 35);
-        Disbuff.printf("%.2f", M5.Axp.GetVinVoltage());
-        if( M5.Axp.GetVinVoltage() > 4.2 )
-        {
-            Disbuff.setTextColor(GREEN);
-            Disbuff.printf(" 5V OK");
-        }
-        else
-        {
-            Disbuff.setTextColor(RED);
-            Disbuff.printf("5V Err");
-        }
-        Disbuff.setTextColor(WHITE);
-        
-        Disbuff.setCursor(5, 50);
-        Disbuff.printf("%d", pin36_adc);
-        if( pin36_adc > 1100 )
-        {
-            Disbuff.setTextColor(GREEN);
-            Disbuff.printf("3V3 OK");
-        }
-        else
-        {
-            Disbuff.setTextColor(RED);
-            Disbuff.printf("3V3 Err");
-        }
-        Disbuff.setTextColor(WHITE);
-        
-        Displaybuff();
-        /*
-        pin36_adc = analogRead(36);
-
-        Disbuff.fillRect(0, 0, 160, 80, BLACK);
-        Disbuff.setTextSize(3);
-        Disbuff.setCursor(5, 15);
-        Disbuff.printf("%.2f", M5.Axp.GetVinVoltage());
-        Disbuff.setCursor(5, 45);
-        Disbuff.printf("%d", pin36_adc);
-        Displaybuff();
-        */
-        M5.update();
-        delay(100);
-
-    }
-    while ((M5.BtnA.isPressed()) || (M5.BtnB.isPressed()))
-    {
-        M5.update();
-        delay(10);
-    }
-    InitI2SMicroPhone();
-}
 
 void DisIRSend()
 {
@@ -1176,79 +543,6 @@ void DisIRSend()
     Disbuff.setTextColor(WHITE);
 }
 
-void DisPlayBLESend()
-{
-    uint8_t senddata[2]={0};
-
-    pService->start();
-  pServer->getAdvertising()->start();
-
-    while ((!M5.BtnA.isPressed()) && (!M5.BtnB.isPressed()))
-    {
-        Disbuff.fillRect(0, 0, 160, 80, BLACK);
-        if( deviceConnected )
-        {
-            Disbuff.pushImage(110, 16, 48, 48, (uint16_t *)icon_ble);
-            Disbuff.setTextColor(Disbuff.color565(180,180,180));
-            Disbuff.setTextSize(2);
-            Disbuff.setCursor(12, 20);
-            //Disbuff.printf("BLE connect!\n");
-            Disbuff.printf("BLE Send\n");
-            Disbuff.setCursor(12, 45);
-            if( senddata[0] % 4 == 0 )
-            {
-                Disbuff.printf("0x%02X>  ",senddata[0]);
-            }
-            else if( senddata[0] % 4 == 1 )
-            {
-                Disbuff.printf("0x%02X>>",senddata[0]);
-            }
-            else if( senddata[0] % 4 == 2 )
-            {
-                Disbuff.printf("0x%02X >>",senddata[0]);
-            }
-            else if( senddata[0] % 4 == 3 )
-            {
-                Disbuff.printf("0x%02X  >",senddata[0]);
-            }
-
-            senddata[1]++;
-            if( senddata[1] > 3 )
-            {
-                senddata[1] = 0;
-                senddata[0]++;
-                pTxCharacteristic->setValue( senddata, 1 );
-                pTxCharacteristic->notify();
-            }
-        }
-        else
-        {
-            Disbuff.setTextSize(1);
-            Disbuff.setCursor(12, 20);
-            Disbuff.setTextColor(RED);
-            Disbuff.printf("BLE disconneXXct\n");
-            Disbuff.setCursor(12, 35);
-            Disbuff.setTextColor(Disbuff.color565(18,150,219));
-            Disbuff.printf("BLE Name:M5-BLE\n");
-            Disbuff.setCursor(12, 50);
-            Disbuff.printf("UUID:1bc68b2a\n");
-            Disbuff.pushImage(110, 16, 48, 48, (uint16_t *)icon_ble_disconnect);
-        }
-        
-        Displaybuff();
-        
-        M5.update();
-        delay(100);
-    }
-    while ((M5.BtnA.isPressed()) || (M5.BtnB.isPressed()))
-    {
-        M5.update();
-        delay(10);
-    }
-    Disbuff.setTextColor(WHITE);
-    pService->stop();
-    pServer->getAdvertising()->stop();
-}
 
 void DisplayWIFI()
 {
@@ -1310,10 +604,6 @@ void setup()
 {
     M5.begin();
     M5.update();
-    if (M5.BtnB.isPressed())
-    {
-        TestMode = true;
-    }
     Wire.begin(32,33,10000);
 
     M5.Lcd.setRotation(3);
@@ -1366,10 +656,6 @@ void setup()
 
   Disbuff.fillRect(0,0,160,80,BLACK);
   Displaybuff();
-  if (TestMode)
-  {
-    ColorBar();
-  }
 
     pinMode(10, OUTPUT);
 
@@ -1389,20 +675,13 @@ void setup()
     xTaskCreate(Drawdisplay, "Drawdisplay", 1024 * 2, (void *)0, 4, &xhandle_display);
     xTaskCreate(MicRecordfft, "MicRecordfft", 1024 * 2, (void *)0, 5, &xhandle_fft);
 }
-uint8_t xData, yData;
+
 void loop()
 {
     delay(100);
     Sniffer();
-    MPU6886Test();
     DisplayRTC();
-    DisplayMicro();
     DisIRSend();
     DisPlayBLESend();
     DisplayWIFI();
-    if (TestMode)
-    {
-        DisplayI2CENV();
-        DisplayIOPort();
-    }
 }
