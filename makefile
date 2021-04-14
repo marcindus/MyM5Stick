@@ -21,6 +21,7 @@ rsync:
 					--exclude ".pio" \
 					--exclude "unit_tests/" \
 					--exclude "build/" \
+					--exclude "tmp/" \
 					${SYNC_PATH_LOCAL}/ ${PI_USER}@${PI_ADDRESS}:/home/${PI_USER}/${PROJ_DIR}/
 miniterm:
 	python3 -m serial.tools.miniterm --raw --encoding ascii ${PORT} ${BAUDRATE}
