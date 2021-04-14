@@ -97,5 +97,19 @@ void wifi_sniffer_packet_handler(void* buff, wifi_promiscuous_pkt_type_t type)
   );
 }
 
+void SnifferLoop()
+{
+
+  Serial.begin(115200);
+  delay(10);
+  wifi_sniffer_init();
+  delay(1000); // wait for a second
+  vTaskDelay(WIFI_CHANNEL_SWITCH_INTERVAL / portTICK_PERIOD_MS);
+  wifi_sniffer_set_channel(channel);
+  channel = (channel % WIFI_CHANNEL_MAX) + 1;
+}
+
+
+
 
 
