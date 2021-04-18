@@ -1,3 +1,5 @@
+#pragma once
+
 #include "freertos/FreeRTOS.h"
 #include "esp_wifi.h"
 #include "esp_wifi_types.h"
@@ -28,10 +30,22 @@ typedef struct {
   uint8_t payload[0]; /* network data ended with 4 bytes csum (CRC32) */
 } wifi_ieee80211_packet_t;
 
+
+class IEspWifiWrapper
+{
+public:
+    virtual ~IEspWifiWrapper(){};
+    virtual void pinMode(GpioNodemcuV2 p_pin, GpioMode p_mode) const = 0;
+
+
+
+};
+
+
 static esp_err_t event_handler(void *ctx, system_event_t *event);
 static void wifi_sniffer_init(void);
 static void wifi_sniffer_set_channel(uint8_t channel);
-static const char *wifi_sniffer_packet_type2str(wifi_promiscuous_pkt_type_t type);
+static const String wifi_sniffer_packet_type2str(wifi_promiscuous_pkt_type_t type);
 static void wifi_sniffer_packet_handler(void *buff, wifi_promiscuous_pkt_type_t type);
 
 esp_err_t event_handler(void *ctx, system_event_t *event)
@@ -41,7 +55,7 @@ esp_err_t event_handler(void *ctx, system_event_t *event)
 
 void wifi_sniffer_init(void)
 {
-  nvs_flash_init();
+  nvs_flash_init(); 
   tcpip_adapter_init();
   ESP_ERROR_CHECK( esp_event_loop_init(event_handler, NULL) );
   wifi_init_config_t cfg = WIFI_INIT_CONFIG_DEFAULT();
@@ -59,13 +73,14 @@ void wifi_sniffer_set_channel(uint8_t channel)
   esp_wifi_set_channel(channel, WIFI_SECOND_CHAN_NONE);
 }
 
-const char * wifi_sniffer_packet_type2str(wifi_promiscuous_pkt_type_t type)
+//String s = F("hello");
+const String wifi_sniffer_packet_type2str(wifi_promiscuous_pkt_type_t type)
 {
   switch(type) {
-  case WIFI_PKT_MGMT: return "MGMT";
-  case WIFI_PKT_DATA: return "DATA";
+  case WIFI_PKT_MGMT: return F("MGMT");
+  case WIFI_PKT_DATA: return F("DATA");
   default:  
-  case WIFI_PKT_MISC: return "MISC";
+  case WIFI_PKT_MISC: return F("MISC");
   }
 }
 
@@ -104,7 +119,7 @@ void SnifferLoop()
   delay(10);
   wifi_sniffer_init();
   delay(1000); // wait for a second
-  vTaskDelay(WIFI_CHANNEL_SWITCH_INTERVAL / portTICK_PERIOD_MS);
+  //vTaskDelay(WIFI_CHANNEL_SWITCH_INTERVAL / portTICK_PERIOD_MS);
   wifi_sniffer_set_channel(channel);
   channel = (channel % WIFI_CHANNEL_MAX) + 1;
 }

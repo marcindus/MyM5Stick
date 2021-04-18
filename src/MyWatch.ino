@@ -17,7 +17,7 @@ void Sniffer()
     Displaybuff();
     while ((!M5.BtnA.isPressed()) && (!M5.BtnB.isPressed()))
     {
-        Disbuff.drawString("sniffer here",32,5,1);
+        Disbuff.drawString("sniffer start",32,5,1);
         Displaybuff();
         M5.update();
     }
@@ -69,13 +69,12 @@ void setup()
 {
     M5.begin();
     M5.update();
-
+    Serial.println(F("Hello"));
     M5.Lcd.setRotation(3);
     M5.Lcd.setSwapBytes(false);
     Disbuff.createSprite(160, 80);
     Disbuff.setSwapBytes(true);
 
-    Serial.println(F("Hello"));
     Disbuff.fillRect(0,0,160,80,BLACK);
     Displaybuff();
 
