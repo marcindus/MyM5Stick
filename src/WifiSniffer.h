@@ -31,15 +31,36 @@ typedef struct {
 } wifi_ieee80211_packet_t;
 
 
-class IEspWifiWrapper
+class ISniffer
 {
 public:
-    virtual ~IEspWifiWrapper(){};
-    virtual void pinMode(GpioNodemcuV2 p_pin, GpioMode p_mode) const = 0;
-
-
-
+    virtual ~ISniffer(){};
+    virtual void start() = 0;
+    virtual void stop() = 0;
+    virtual void onPacket() = 0;
+    virtual void printResults() = 0;
+    virtual uint8_t getChannel() = 0;
+    virtual void setChannel(uint8_t) = 0;
 };
+
+
+class WifiSniffer : ISniffer
+{
+ public:
+    WifiSniffer();
+    void start() override;
+    void stop() override;
+    void onPacket() override;
+    void printResults() override;
+    uint8_t  getChannel() override;
+    void setChannel(uint8_t) override;
+};
+
+WifiSniffer::WifiSniffer()
+{
+
+}
+
 
 
 static esp_err_t event_handler(void *ctx, system_event_t *event);
@@ -55,17 +76,7 @@ esp_err_t event_handler(void *ctx, system_event_t *event)
 
 void wifi_sniffer_init(void)
 {
-  nvs_flash_init(); 
-  tcpip_adapter_init();
-  ESP_ERROR_CHECK( esp_event_loop_init(event_handler, NULL) );
-  wifi_init_config_t cfg = WIFI_INIT_CONFIG_DEFAULT();
-  ESP_ERROR_CHECK( esp_wifi_init(&cfg) );
-  ESP_ERROR_CHECK( esp_wifi_set_country(&wifi_country) ); /* set country for channel range [1, 13] */
-  ESP_ERROR_CHECK( esp_wifi_set_storage(WIFI_STORAGE_RAM) );
-  ESP_ERROR_CHECK( esp_wifi_set_mode(WIFI_MODE_NULL) );
-  ESP_ERROR_CHECK( esp_wifi_start() );
-  esp_wifi_set_promiscuous(true);
-  esp_wifi_set_promiscuous_rx_cb(&wifi_sniffer_packet_handler);
+
 }
 
 void wifi_sniffer_set_channel(uint8_t channel)
