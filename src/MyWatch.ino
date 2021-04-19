@@ -6,9 +6,9 @@
 
 TFT_eSprite Disbuff = TFT_eSprite(&M5.Lcd);
 
-//  nvs_flash_init(); 
+//  nvs_flash_init();
 
-  //vTaskDelay(WIFI_CHANNEL_SWITCH_INTERVAL / portTICK_PERIOD_MS);
+// vTaskDelay(WIFI_CHANNEL_SWITCH_INTERVAL / portTICK_PERIOD_MS);
 
 void Displaybuff()
 {
@@ -21,7 +21,7 @@ void Sniffer()
     Displaybuff();
     while ((!M5.BtnA.isPressed()) && (!M5.BtnB.isPressed()))
     {
-        Disbuff.drawString("sniffer start",32,5,1);
+        Disbuff.drawString("sniffer start", 32, 5, 1);
         Displaybuff();
         M5.update();
     }
@@ -31,7 +31,6 @@ void Sniffer()
         delay(10);
     }
 }
-
 
 void DisplayRTC()
 {
@@ -53,9 +52,9 @@ void DisplayRTC()
         Disbuff.setTextColor(WHITE);
         Disbuff.setCursor(6, 40);
         Disbuff.printf("%02d:%02d:%02d", time.Hours, time.Minutes, time.Seconds);
-        Disbuff.fillRect(0,0,160,18,Disbuff.color565(20,20,20));
+        Disbuff.fillRect(0, 0, 160, 18, Disbuff.color565(20, 20, 20));
         Disbuff.setTextSize(1);
-        Disbuff.drawString("BMP8563 RTC Time",32,5,1);
+        Disbuff.drawString("BMP8563 RTC Time", 32, 5, 1);
         Displaybuff();
         M5.update();
         delay(100);
@@ -67,8 +66,6 @@ void DisplayRTC()
     }
 }
 
-
-
 void setup()
 {
     M5.begin();
@@ -79,9 +76,8 @@ void setup()
     Disbuff.createSprite(160, 80);
     Disbuff.setSwapBytes(true);
 
-    Disbuff.fillRect(0,0,160,80,BLACK);
+    Disbuff.fillRect(0, 0, 160, 80, BLACK);
     Displaybuff();
-
 }
 
 void loop()

@@ -6,37 +6,30 @@
 #include <BLEUtils.h>
 #include <BLE2902.h>
 
+#define SERVICE_UUID "1bc68b2a-f3e3-11e9-81b4-2a2ae2dbcce4"
+#define CHARACTERISTIC_RX_UUID "1bc68da0-f3e3-11e9-81b4-2a2ae2dbcce4"
+#define CHARACTERISTIC_TX_UUID "1bc68efe-f3e3-11e9-81b4-2a2ae2dbcce4"
 
-#define SERVICE_UUID      "1bc68b2a-f3e3-11e9-81b4-2a2ae2dbcce4"
-#define CHARACTERISTIC_RX_UUID  "1bc68da0-f3e3-11e9-81b4-2a2ae2dbcce4"
-#define CHARACTERISTIC_TX_UUID  "1bc68efe-f3e3-11e9-81b4-2a2ae2dbcce4"
-
-BLEServer *pServer = NULL;
-BLEService *pService = NULL;
-BLECharacteristic * pTxCharacteristic;
+BLEServer* pServer = NULL;
+BLEService* pService = NULL;
+BLECharacteristic* pTxCharacteristic;
 bool deviceConnected = false;
 bool oldDeviceConnected = false;
 
-class MyServerCallbacks: public BLEServerCallbacks {
-    void onConnect(BLEServer* pServer) {
-      deviceConnected = true;
-    };
+class MyServerCallbacks : public BLEServerCallbacks
+{
+    void onConnect(BLEServer* pServer) { deviceConnected = true; };
 
-    void onDisconnect(BLEServer* pServer) {
-      deviceConnected = false;
-    }
+    void onDisconnect(BLEServer* pServer) { deviceConnected = false; }
 };
 
 uint8_t* data = new uint8_t[128];
 
-class MyCallbacks: public BLECharacteristicCallbacks {
+class MyCallbacks : public BLECharacteristicCallbacks
+{
 
-    void onWrite(BLECharacteristic *pCharacteristic) {
-    data = pCharacteristic->getData();
-    }
+    void onWrite(BLECharacteristic* pCharacteristic) { data = pCharacteristic->getData(); }
 };
-
-
 
 bool checkAXP192()
 {
@@ -109,12 +102,11 @@ bool InitI2SMicroPhone()
     pin_config.ws_io_num = PIN_CLK;
     pin_config.data_out_num = I2S_PIN_NO_CHANGE;
     pin_config.data_in_num = PIN_DATA;
-    
 
     err += i2s_driver_install(I2S_NUM_0, &i2s_config, 0, NULL);
     err += i2s_set_pin(I2S_NUM_0, &pin_config);
     err += i2s_set_clk(I2S_NUM_0, 44100, I2S_BITS_PER_SAMPLE_16BIT, I2S_CHANNEL_MONO);
-    //i2s_set_clk(0)
+    // i2s_set_clk(0)
 
     if (err != ESP_OK)
     {
@@ -126,27 +118,20 @@ bool InitI2SMicroPhone()
     }
 }
 
-
 bool InitBLEServer()
 {
     BLEDevice::init("M5-BLE");
-  pServer = BLEDevice::createServer();
-  pServer->setCallbacks(new MyServerCallbacks());
-  pService = pServer->createService(SERVICE_UUID);
-  pTxCharacteristic = pService->createCharacteristic(
-                      CHARACTERISTIC_RX_UUID,
-                      BLECharacteristic::PROPERTY_NOTIFY
-                    );
+    pServer = BLEDevice::createServer();
+    pServer->setCallbacks(new MyServerCallbacks());
+    pService = pServer->createService(SERVICE_UUID);
+    pTxCharacteristic = pService->createCharacteristic(CHARACTERISTIC_RX_UUID, BLECharacteristic::PROPERTY_NOTIFY);
 
-  pTxCharacteristic->addDescriptor(new BLE2902());
-  BLECharacteristic * pRxCharacteristic = pService->createCharacteristic(
-                        CHARACTERISTIC_TX_UUID,
-                        BLECharacteristic::PROPERTY_WRITE
-                      );
+    pTxCharacteristic->addDescriptor(new BLE2902());
+    BLECharacteristic* pRxCharacteristic =
+        pService->createCharacteristic(CHARACTERISTIC_TX_UUID, BLECharacteristic::PROPERTY_WRITE);
     pRxCharacteristic->setCallbacks(new MyCallbacks());
 
     return true;
-
 }
 
 bool InitIRTx()
@@ -180,11 +165,11 @@ bool InitIRTx()
     return true;
 }
 
-bool checkOUTIO()  //Not used - looks like some voltage  check
+bool checkOUTIO() // Not used - looks like some voltage  check
 
 {
     uint32_t sumadc1 = 0, sumadc2 = 0;
-    pinMode(26,INPUT);
+    pinMode(26, INPUT);
 
     for (int i = 0; i < 50; i++)
     {
@@ -200,17 +185,16 @@ bool checkOUTIO()  //Not used - looks like some voltage  check
 
     printf("%d,%d\n", sumadc1, sumadc2);
 
-    if ( sumadc1 < 3000 )
+    if (sumadc1 < 3000)
     {
         ErrorMeg(0x61, "5V or 26 error");
     }
-    if ( sumadc2 < 2500 )
+    if (sumadc2 < 2500)
     {
         ErrorMeg(0x62, "3V3 or 36 error");
     }
     return true;
 }
-
 
 bool CheckGrove()
 {
@@ -222,10 +206,10 @@ bool CheckGrove()
     {
         tmp = dht12.readTemperature();
         hum = dht12.readHumidity();
-        if(( tmp > 50 )||( tmp < -20 )||( hum > 100 )||( hum == 0 ))
+        if ((tmp > 50) || (tmp < -20) || (hum > 100) || (hum == 0))
         {
-            count ++;
-            if( count > 5 )
+            count++;
+            if (count > 5)
             {
                 ErrorMeg(0x91, "Grove error");
                 return false;
@@ -235,11 +219,9 @@ bool CheckGrove()
     return true;
 }
 
-
-
 void CheckHardware()
 {
-   if (InitI2SMicroPhone() != true)
+    if (InitI2SMicroPhone() != true)
     {
         ErrorMeg(0x51, "MicroPhone error");
     }
@@ -247,17 +229,14 @@ void CheckHardware()
     {
         ErrorMeg(0x31, "MPU6886 error ");
     }
-    if( InitIRTx() != true )
+    if (InitIRTx() != true)
     {
         ErrorMeg(0x72, "RMT Init error");
     }
-    if( InitBLEServer() != true )
+    if (InitBLEServer() != true)
     {
         ErrorMeg(0x81, "BLE init error");
     }
     checkAXP192();
     checkBM8563();
-
-
-
 }
