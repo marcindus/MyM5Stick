@@ -6,6 +6,10 @@
 
 TFT_eSprite Disbuff = TFT_eSprite(&M5.Lcd);
 
+//  nvs_flash_init(); 
+
+  //vTaskDelay(WIFI_CHANNEL_SWITCH_INTERVAL / portTICK_PERIOD_MS);
+
 void Displaybuff()
 {
     Disbuff.pushSprite(0, 0);

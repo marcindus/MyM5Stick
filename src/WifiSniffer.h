@@ -54,38 +54,47 @@ class WifiSniffer : ISniffer
     void printResults() override;
     uint8_t  getChannel() override;
     void setChannel(uint8_t) override;
+
+private:
+    static esp_err_t event_handler(void *ctx, system_event_t *event);
+    static void wifi_sniffer_init(void);
+    static void wifi_sniffer_set_channel(uint8_t channel);
+    static const String wifi_sniffer_packet_type2str(wifi_promiscuous_pkt_type_t type);
+    static void wifi_sniffer_packet_handler(void *buff, wifi_promiscuous_pkt_type_t type);
+
+
 };
 
 WifiSniffer::WifiSniffer()
 {
-
+  tcpip_adapter_init();
+  ESP_ERROR_CHECK( esp_event_loop_init(event_handler, NULL) );
+  wifi_init_config_t cfg = WIFI_INIT_CONFIG_DEFAULT();
+  ESP_ERROR_CHECK( esp_wifi_init(&cfg) );
+  ESP_ERROR_CHECK( esp_wifi_set_country(&wifi_country) ); /* set country for channel range [1, 13] */
+  ESP_ERROR_CHECK( esp_wifi_set_storage(WIFI_STORAGE_RAM) );
+  ESP_ERROR_CHECK( esp_wifi_set_mode(WIFI_MODE_NULL) );
+  ESP_ERROR_CHECK( esp_wifi_start() );
+  esp_wifi_set_promiscuous(true);
+  esp_wifi_set_promiscuous_rx_cb(&wifi_sniffer_packet_handler);
 }
 
-
-
-static esp_err_t event_handler(void *ctx, system_event_t *event);
-static void wifi_sniffer_init(void);
-static void wifi_sniffer_set_channel(uint8_t channel);
-static const String wifi_sniffer_packet_type2str(wifi_promiscuous_pkt_type_t type);
-static void wifi_sniffer_packet_handler(void *buff, wifi_promiscuous_pkt_type_t type);
-
-esp_err_t event_handler(void *ctx, system_event_t *event)
+esp_err_t WifiSniffer::event_handler(void *ctx, system_event_t *event)
 {
   return ESP_OK;
 }
 
 void wifi_sniffer_init(void)
 {
-
 }
 
-void wifi_sniffer_set_channel(uint8_t channel)
+void WifiSniffer::wifi_sniffer_set_channel(uint8_t channel)
 {
   esp_wifi_set_channel(channel, WIFI_SECOND_CHAN_NONE);
 }
 
 //String s = F("hello");
-const String wifi_sniffer_packet_type2str(wifi_promiscuous_pkt_type_t type)
+const String WifiSniffer::wifi_sniffer_packet_type2str(wifi_promiscuous_pkt_type_t type)
 {
   switch(type) {
   case WIFI_PKT_MGMT: return F("MGMT");
@@ -95,7 +104,7 @@ const String wifi_sniffer_packet_type2str(wifi_promiscuous_pkt_type_t type)
   }
 }
 
-void wifi_sniffer_packet_handler(void* buff, wifi_promiscuous_pkt_type_t type)
+void WifiSniffer::wifi_sniffer_packet_handler(void* buff, wifi_promiscuous_pkt_type_t type)
 {
   if (type != WIFI_PKT_MGMT)
     return;
@@ -126,13 +135,12 @@ void wifi_sniffer_packet_handler(void* buff, wifi_promiscuous_pkt_type_t type)
 void SnifferLoop()
 {
 
-  Serial.begin(115200);
-  delay(10);
-  wifi_sniffer_init();
-  delay(1000); // wait for a second
-  //vTaskDelay(WIFI_CHANNEL_SWITCH_INTERVAL / portTICK_PERIOD_MS);
-  wifi_sniffer_set_channel(channel);
-  channel = (channel % WIFI_CHANNEL_MAX) + 1;
+  //Serial.begin(115200);
+  //delay(10);
+  //wifi_sniffer_init();
+  //delay(1000); // wait for a second
+  //wifi_sniffer_set_channel(channel);
+  //channel = (channel % WIFI_CHANNEL_MAX) + 1; //scanning channels in a loop - businnes logic
 }
 
 
