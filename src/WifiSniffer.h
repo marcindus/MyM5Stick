@@ -8,10 +8,6 @@
 #include "esp_event_loop.h"
 #include "nvs_flash.h"
 
-#define WIFI_CHANNEL_SWITCH_INTERVAL  (500)
-#define WIFI_CHANNEL_MAX               (13)
-
-uint8_t level = 0, channel = 1;
 
 static wifi_country_t wifi_country = {.cc="CN", .schan = 1, .nchan = 13}; //Most recent esp32 library struct
 
@@ -37,10 +33,10 @@ public:
     virtual ~ISniffer(){};
     virtual void start() = 0;
     virtual void stop() = 0;
-    virtual void onPacket() = 0;
-    virtual void printResults() = 0;
-    virtual uint8_t getChannel() = 0;
-    virtual void setChannel(uint8_t) = 0;
+    virtual void on_packet() = 0;
+    virtual void print_results() = 0;
+    virtual uint8_t get_channel() = 0;
+    virtual void set_channel(uint8_t) = 0;
 };
 
 
@@ -50,10 +46,10 @@ class WifiSniffer : ISniffer
     WifiSniffer();
     void start() override;
     void stop() override;
-    void onPacket() override;
-    void printResults() override;
-    uint8_t  getChannel() override;
-    void setChannel(uint8_t) override;
+    void on_packet() override;
+    void print_results() override;
+    uint8_t  get_channel() override;
+    void set_channel(uint8_t) override;
 
 private:
     static esp_err_t event_handler(void *ctx, system_event_t *event);
@@ -75,17 +71,23 @@ WifiSniffer::WifiSniffer()
   ESP_ERROR_CHECK( esp_wifi_set_storage(WIFI_STORAGE_RAM) );
   ESP_ERROR_CHECK( esp_wifi_set_mode(WIFI_MODE_NULL) );
   ESP_ERROR_CHECK( esp_wifi_start() );
-  esp_wifi_set_promiscuous(true);
   esp_wifi_set_promiscuous_rx_cb(&wifi_sniffer_packet_handler);
 }
+
+void WifiSniffer::start()
+{
+  esp_wifi_set_promiscuous(true);
+}
+
+void WifiSniffer::stop()
+{
+  esp_wifi_set_promiscuous(false);
+}
+
 
 esp_err_t WifiSniffer::event_handler(void *ctx, system_event_t *event)
 {
   return ESP_OK;
-}
-
-void wifi_sniffer_init(void)
-{
 }
 
 void WifiSniffer::wifi_sniffer_set_channel(uint8_t channel)
@@ -93,7 +95,6 @@ void WifiSniffer::wifi_sniffer_set_channel(uint8_t channel)
   esp_wifi_set_channel(channel, WIFI_SECOND_CHAN_NONE);
 }
 
-//String s = F("hello");
 const String WifiSniffer::wifi_sniffer_packet_type2str(wifi_promiscuous_pkt_type_t type)
 {
   switch(type) {
@@ -135,10 +136,11 @@ void WifiSniffer::wifi_sniffer_packet_handler(void* buff, wifi_promiscuous_pkt_t
 void SnifferLoop()
 {
 
-  //Serial.begin(115200);
-  //delay(10);
+  Serial.begin(115200);
+  delay(10);
   //wifi_sniffer_init();
-  //delay(1000); // wait for a second
+  WifiSniffer sniffer{};
+  delay(1000); // wait for a second
   //wifi_sniffer_set_channel(channel);
   //channel = (channel % WIFI_CHANNEL_MAX) + 1; //scanning channels in a loop - businnes logic
 }
