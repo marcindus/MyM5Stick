@@ -63,7 +63,7 @@ public:
 class WifiWrapper : IWifiWrapper
 {
 public:
-    virtual void start() = 0;
+    WifiWrapper(){};
 
     esp_err_t _esp_wifi_init(wifi_init_config_t) override;
     esp_err_t _esp_wifi_set_country(wifi_country_t) override;
@@ -72,11 +72,16 @@ public:
     esp_err_t _esp_wifi_start() override;
     esp_err_t _esp_wifi_set_promiscuous(bool) override;
     esp_err_t _esp_wifi_set_promiscuous_rx_cb(wifi_promiscuous_cb_t) override;
+
+private:
+    //country config
+    //
+
 };
 
 esp_err_t WifiWrapper::_esp_wifi_init(wifi_init_config_t cfg) 
 {
-    ESP_ERROR_CHECK(esp_wifi_init(cfg));
+    ESP_ERROR_CHECK(esp_wifi_init(&cfg));
 };
 esp_err_t WifiWrapper::_esp_wifi_set_country(wifi_country_t country) 
 {
@@ -104,6 +109,7 @@ esp_err_t WifiWrapper::_esp_wifi_set_promiscuous_rx_cb(wifi_promiscuous_cb_t cb)
 };
 
 
+read this !!!!   esp32/esp_wifi.h 
 
 
 class WifiSniffer : ISniffer
