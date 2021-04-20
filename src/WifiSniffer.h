@@ -51,13 +51,60 @@ public:
     virtual ~IWifiWrapper(){};
     virtual void start() = 0;
 
-    virtual esp_err_t esp_wifi_init(wifi_init_config_t) = 0;
-    virtual esp_err_t esp_wifi_set_country(wifi_country_t) = 0;
-    virtual esp_err_t esp_wifi_set_storage(wifi_storage_t) = 0;
-    virtual esp_err_t esp_wifi_set_mode(wifi_mode_t) = 0;
-    virtual esp_err_t esp_wifi_start() = 0;
-    virtual esp_err_t esp_wifi_set_promiscuous_rx_cb(wifi_promiscuous_cb_t) = 0;
+    virtual esp_err_t _esp_wifi_init(wifi_init_config_t) = 0;
+    virtual esp_err_t _esp_wifi_set_country(wifi_country_t) = 0;
+    virtual esp_err_t _esp_wifi_set_storage(wifi_storage_t) = 0;
+    virtual esp_err_t _esp_wifi_set_mode(wifi_mode_t) = 0;
+    virtual esp_err_t _esp_wifi_start() = 0;
+    virtual esp_err_t _esp_wifi_set_promiscuous(bool) = 0;
+    virtual esp_err_t _esp_wifi_set_promiscuous_rx_cb(wifi_promiscuous_cb_t) = 0;
 };
+
+class WifiWrapper : IWifiWrapper
+{
+public:
+    virtual void start() = 0;
+
+    esp_err_t _esp_wifi_init(wifi_init_config_t) override;
+    esp_err_t _esp_wifi_set_country(wifi_country_t) override;
+    esp_err_t _esp_wifi_set_storage(wifi_storage_t) override;
+    esp_err_t _esp_wifi_set_mode(wifi_mode_t) override;
+    esp_err_t _esp_wifi_start() override;
+    esp_err_t _esp_wifi_set_promiscuous(bool) override;
+    esp_err_t _esp_wifi_set_promiscuous_rx_cb(wifi_promiscuous_cb_t) override;
+};
+
+esp_err_t WifiWrapper::_esp_wifi_init(wifi_init_config_t cfg) 
+{
+    ESP_ERROR_CHECK(esp_wifi_init(cfg));
+};
+esp_err_t WifiWrapper::_esp_wifi_set_country(wifi_country_t country) 
+{
+    //
+};
+esp_err_t WifiWrapper::_esp_wifi_set_storage(wifi_storage_t memory_storage) 
+{
+    //
+};
+esp_err_t WifiWrapper::_esp_wifi_set_mode(wifi_mode_t mode) 
+{
+    //
+};
+esp_err_t WifiWrapper::_esp_wifi_start() 
+{
+    //
+};
+esp_err_t WifiWrapper::_esp_wifi_set_promiscuous(bool set_promiscous) 
+{
+    //
+};
+esp_err_t WifiWrapper::_esp_wifi_set_promiscuous_rx_cb(wifi_promiscuous_cb_t cb) 
+{
+    ///
+};
+
+
+
 
 class WifiSniffer : ISniffer
 {
@@ -74,7 +121,7 @@ private:
     static esp_err_t event_handler(void* ctx, system_event_t* event);
     static void wifi_sniffer_init(void);
     static void wifi_sniffer_set_channel(uint8_t channel);
-    static const String wifi_sniffer_packet_type2str(wifi_promiscuous_pkt_type_t type);
+    static const String sniffer_packet_type2str(wifi_promiscuous_pkt_type_t type);
     static void wifi_sniffer_packet_handler(void* buff, wifi_promiscuous_pkt_type_t type);
 };
 
@@ -111,7 +158,7 @@ void WifiSniffer::wifi_sniffer_set_channel(uint8_t channel)
     esp_wifi_set_channel(channel, WIFI_SECOND_CHAN_NONE);
 }
 
-const String WifiSniffer::wifi_sniffer_packet_type2str(wifi_promiscuous_pkt_type_t type)
+const String WifiSniffer::sniffer_packet_type2str(wifi_promiscuous_pkt_type_t type)
 {
     switch (type)
     {
@@ -138,7 +185,7 @@ void WifiSniffer::wifi_sniffer_packet_handler(void* buff, wifi_promiscuous_pkt_t
            " ADDR1=%02x:%02x:%02x:%02x:%02x:%02x,"
            " ADDR2=%02x:%02x:%02x:%02x:%02x:%02x,"
            " ADDR3=%02x:%02x:%02x:%02x:%02x:%02x\n",
-           wifi_sniffer_packet_type2str(type),
+           sniffer_packet_type2str(type),
            ppkt->rx_ctrl.channel,
            ppkt->rx_ctrl.rssi,
            /* ADDR1 */
