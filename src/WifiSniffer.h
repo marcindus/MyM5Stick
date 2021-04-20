@@ -51,7 +51,7 @@ public:
     virtual ~IWifiWrapper(){};
     virtual void start() = 0;
 
-    virtual esp_err_t _esp_wifi_init(wifi_init_config_t) = 0;
+    virtual esp_err_t _esp_wifi_init(wifi_init_config_t) = 0; //Alloc resource for WiFi driver, such as WiFi control structure, RX/TX buffer,
     virtual esp_err_t _esp_wifi_set_country(wifi_country_t) = 0;
     virtual esp_err_t _esp_wifi_set_storage(wifi_storage_t) = 0;
     virtual esp_err_t _esp_wifi_set_mode(wifi_mode_t) = 0;
@@ -62,8 +62,21 @@ public:
 
 class WifiWrapper : IWifiWrapper
 {
+
+//   API documentation here: esp32/esp_wifi.h
+
 public:
-    WifiWrapper(){};
+    WifiWrapper()
+    {
+        //debug log
+        //test for failure init 
+        esp_wifi_init(wifi_country);
+    };
+
+    ~WifiWrapper()
+    {
+        esp_wifi_deinit();
+    }
 
     esp_err_t _esp_wifi_init(wifi_init_config_t) override;
     esp_err_t _esp_wifi_set_country(wifi_country_t) override;
@@ -74,6 +87,8 @@ public:
     esp_err_t _esp_wifi_set_promiscuous_rx_cb(wifi_promiscuous_cb_t) override;
 
 private:
+
+    static wifi_country_t wifi_country = {.cc = "CN", .schan = 1, .nchan = 13}; // Most recent esp32 library struct - country and channels range
     //country config
     //
 
@@ -109,7 +124,6 @@ esp_err_t WifiWrapper::_esp_wifi_set_promiscuous_rx_cb(wifi_promiscuous_cb_t cb)
 };
 
 
-read this !!!!   esp32/esp_wifi.h 
 
 
 class WifiSniffer : ISniffer
