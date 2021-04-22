@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.11)
-project(project)
-
+project(my_m5stick)
 include(FetchContent)
+
 
 FetchContent_Declare(
     googletest
@@ -19,6 +19,9 @@ add_definitions(-Wno-unused-variable)
 add_definitions(-Wno-unused-parameter)
 add_definitions(-Wall -Werror -pedantic -Wextra)
 
+include_directories(src test)
 
-add_executable(gtests unit_tests/gtestCheck.cpp)
+
+
+add_executable(gtests tests/gtestCheck.cpp)
 target_link_libraries(gtests gtest_main gmock_main)
