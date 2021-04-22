@@ -144,7 +144,7 @@ void WifiWrapper::_esp_wifi_set_channel(uint8_t primary, wifi_second_chan_t seco
 class WifiSniffer : ISniffer
 {
 public:
-    WifiSniffer(std::unique_ptr<IWifiWrapper> wifi_wrapper) : wifi_wrapper(std::move(wifi_wrapper))
+    WifiSniffer(std::unique_ptr<IWifiWrapper> _wifi_wrapper) : wifi_wrapper(std::move(_wifi_wrapper))
     {
         tcpip_adapter_init();   
         ESP_ERROR_CHECK(esp_event_loop_init(event_handler, NULL));
@@ -156,6 +156,7 @@ public:
     void print_results() override;
     uint8_t get_channel() override;
     void set_channel(uint8_t) override;
+    void scan_loop();
 
 private:
     static esp_err_t event_handler(void* ctx, system_event_t* event);
@@ -165,6 +166,13 @@ private:
     static void wifi_sniffer_packet_handler(void* buff, wifi_promiscuous_pkt_type_t type);
     std::unique_ptr<IWifiWrapper> wifi_wrapper;
 };
+
+void WifiSniffer::scan_loop()
+{
+    // channel = (channel % WIFI_CHANNEL_MAX) + 1; //scanning channels in a loop - businnes logic
+    // sleep ?
+    // set channel
+}
 
 void WifiSniffer::start()
 {
@@ -242,12 +250,10 @@ void WifiSniffer::wifi_sniffer_packet_handler(void* buff, wifi_promiscuous_pkt_t
 
 void SnifferLoop()
 {
-
     Serial.begin(115200);
     delay(10);
-    WifiWrapper wrapper{};
-    WifiSniffer sniffer(&wrapper);
-    delay(1000); // wait for a second
-                 // wifi_sniffer_set_channel(channel);
-    // channel = (channel % WIFI_CHANNEL_MAX) + 1; //scanning channels in a loop - businnes logic
+    WifiSniffer sniffer(std::unique_ptr<IWifiWrapper>(new WifiWrapper()));
+    sniffer.start();
+    delay(10);
+    sniffer.stop();
 }
