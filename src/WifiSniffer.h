@@ -31,8 +31,8 @@ public:
 
 private:
     static esp_err_t event_handler(void* ctx, system_event_t* event);
-    static void wifi_sniffer_init(void);
-    static void wifi_sniffer_set_channel(uint8_t channel);
+    void wifi_sniffer_init(void);
+    void wifi_sniffer_set_channel(uint8_t channel);
     static const String sniffer_packet_type2str(wifi_promiscuous_pkt_type_t type);
     static void wifi_sniffer_packet_handler(void* buff, wifi_promiscuous_pkt_type_t type);
     std::unique_ptr<IWifiWrapper> wifi_wrapper;

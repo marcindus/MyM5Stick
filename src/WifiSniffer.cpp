@@ -9,13 +9,13 @@ void WifiSniffer::scan_loop()
 
 void WifiSniffer::start()
 {
-    esp_wifi_set_promiscuous(true);
-    wifi_wrapper->_esp_wifi_set_promiscuous_rx_cb(&wifi_sniffer_packet_handler);
+    wifi_wrapper->set_promiscuous(true);
+    wifi_wrapper->set_promiscuous_rx_cb(&wifi_sniffer_packet_handler);
 }
 
 void WifiSniffer::stop()
 {
-    esp_wifi_set_promiscuous(false);
+    wifi_wrapper->set_promiscuous(false);
 }
 
 esp_err_t WifiSniffer::event_handler(void* ctx, system_event_t* event)
@@ -25,7 +25,7 @@ esp_err_t WifiSniffer::event_handler(void* ctx, system_event_t* event)
 
 void WifiSniffer::wifi_sniffer_set_channel(uint8_t channel)
 {
-    esp_wifi_set_channel(channel, WIFI_SECOND_CHAN_NONE);
+    wifi_wrapper->set_channel(channel);
 }
 
 const String WifiSniffer::sniffer_packet_type2str(wifi_promiscuous_pkt_type_t type)
