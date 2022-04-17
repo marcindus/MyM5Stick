@@ -8,25 +8,24 @@
 #include "nvs_flash.h"
 #include <memory>
 #include "Arduino.h"
-#include "WifiWrapper.h"
-#include "ISniffer.h"
+#include "Wrapper.hpp"
 #include "wifi_ieee80211_packet.h"
 
-class WifiSniffer : public ISniffer
+class Sniffer
 {
 public:
-    WifiSniffer(std::unique_ptr<IWifiWrapper> _wifi_wrapper) : wifi_wrapper(std::move(_wifi_wrapper))
+    Sniffer(std::unique_ptr<Wrapper> _wifi_wrapper) : wifi_wrapper(std::move(_wifi_wrapper))
     {
-        tcpip_adapter_init();   
+        tcpip_adapter_init();
         ESP_ERROR_CHECK(esp_event_loop_init(event_handler, NULL));
     }
 
-    void start() override;
-    void stop() override;
-    void on_packet() override;
-    void print_results() override;
-    uint8_t get_channel() override;
-    void set_channel(uint8_t) override;
+    void start();
+    void stop();
+    void on_packet();
+    void print_results();
+    uint8_t get_channel();
+    void set_channel(uint8_t);
     void scan_loop();
 
 private:
@@ -35,6 +34,5 @@ private:
     void wifi_sniffer_set_channel(uint8_t channel);
     static const String sniffer_packet_type2str(wifi_promiscuous_pkt_type_t type);
     static void wifi_sniffer_packet_handler(void* buff, wifi_promiscuous_pkt_type_t type);
-    std::unique_ptr<IWifiWrapper> wifi_wrapper;
+    std::unique_ptr<Wrapper> wifi_wrapper;
 };
-

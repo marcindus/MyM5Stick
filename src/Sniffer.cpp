@@ -1,34 +1,34 @@
-#include "WifiSniffer.h"
+#include "Sniffer.hpp"
 
-void WifiSniffer::scan_loop()
+void Sniffer::scan_loop()
 {
     // channel = (channel % WIFI_CHANNEL_MAX) + 1; //scanning channels in a loop - businnes logic
     // sleep ?
     // set channel
 }
 
-void WifiSniffer::start()
+void Sniffer::start()
 {
     wifi_wrapper->set_promiscuous(true);
     wifi_wrapper->set_promiscuous_rx_cb(&wifi_sniffer_packet_handler);
 }
 
-void WifiSniffer::stop()
+void Sniffer::stop()
 {
     wifi_wrapper->set_promiscuous(false);
 }
 
-esp_err_t WifiSniffer::event_handler(void* ctx, system_event_t* event)
+esp_err_t Sniffer::event_handler(void* ctx, system_event_t* event)
 {
     return ESP_OK;
 }
 
-void WifiSniffer::wifi_sniffer_set_channel(uint8_t channel)
+void Sniffer::wifi_sniffer_set_channel(uint8_t channel)
 {
     wifi_wrapper->set_channel(channel);
 }
 
-const String WifiSniffer::sniffer_packet_type2str(wifi_promiscuous_pkt_type_t type)
+const String Sniffer::sniffer_packet_type2str(wifi_promiscuous_pkt_type_t type)
 {
     switch (type)
     {
@@ -42,7 +42,7 @@ const String WifiSniffer::sniffer_packet_type2str(wifi_promiscuous_pkt_type_t ty
     }
 }
 
-void WifiSniffer::wifi_sniffer_packet_handler(void* buff, wifi_promiscuous_pkt_type_t type)
+void Sniffer::wifi_sniffer_packet_handler(void* buff, wifi_promiscuous_pkt_type_t type)
 {
     if (type != WIFI_PKT_MGMT)
         return;

@@ -2,7 +2,7 @@
 
 #include <M5StickC.h>
 #include "Arduino.h"
-#include "WifiSniffer.h"
+#include "Sniffer.hpp"
 
 TFT_eSprite Disbuff = TFT_eSprite(&M5.Lcd);
 
@@ -22,6 +22,8 @@ void Sniffer()
     while ((!M5.BtnA.isPressed()) && (!M5.BtnB.isPressed()))
     {
         Disbuff.drawString("sniffer start", 32, 5, 1);
+
+        Serial.println(F("Hello i am sniffer"));
         Displaybuff();
         M5.update();
     }
@@ -70,7 +72,6 @@ void setup()
 {
     M5.begin();
     M5.update();
-    Serial.println(F("Hello"));
     M5.Lcd.setRotation(3);
     M5.Lcd.setSwapBytes(false);
     Disbuff.createSprite(160, 80);
