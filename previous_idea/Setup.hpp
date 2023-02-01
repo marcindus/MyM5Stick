@@ -9,12 +9,10 @@
 
 TFT_eSprite Disbuff = TFT_eSprite(&M5.Lcd);
 
-//std::unique_ptr<Wrapper> wifi_wrapper(new Wrapper()) ; 
-//Sniffer sniffer(std::move(wifi_wrapper));
-
-//  nvs_flash_init();
-
-// vTaskDelay(WIFI_CHANNEL_SWITCH_INTERVAL / portTICK_PERIOD_MS);
+std::unique_ptr<Wrapper> wifi_wrapper(new Wrapper()) ; 
+Sniffer sniffer(std::move(wifi_wrapper));
+//nvs_flash_init();
+//vTaskDelay(WIFI_CHANNEL_SWITCH_INTERVAL / portTICK_PERIOD_MS);
 
 void Displaybuff()
 {
@@ -28,7 +26,7 @@ void Sniffer()
     while ((!M5.BtnA.isPressed()) && (!M5.BtnB.isPressed()))
     {
         Disbuff.drawString("sniffer start", 32, 5, 1);
-        //sniffer.start();
+        sniffer.start();
 
         Displaybuff();
         M5.update();

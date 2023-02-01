@@ -10,9 +10,9 @@ class Wrapper
 public:
     Wrapper()
     {
-        ESP_ERROR_CHECK(esp_wifi_set_country(&default_country));
-        ESP_ERROR_CHECK(esp_wifi_init(&default_config));
-        ESP_ERROR_CHECK(esp_wifi_set_storage(WIFI_STORAGE_RAM));
+        //ESP_ERROR_CHECK(esp_wifi_set_country(&default_country));
+        //ESP_ERROR_CHECK(esp_wifi_init(&default_config));
+        //ESP_ERROR_CHECK(esp_wifi_set_storage(WIFI_STORAGE_RAM));
         ESP_ERROR_CHECK(esp_wifi_set_mode(WIFI_MODE_NULL));
         ESP_ERROR_CHECK(esp_wifi_start());
     };
