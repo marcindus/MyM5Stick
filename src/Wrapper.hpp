@@ -28,6 +28,6 @@ public:
     void set_channel(uint8_t primary);
 
 private:
-    const wifi_country_t default_country = {.cc = "CN", .schan = 1, .nchan = 13};
+    const wifi_country_t default_country = {.cc = "PL", .schan = 1, .nchan = 13};
     const wifi_init_config_t default_config = WIFI_INIT_CONFIG_DEFAULT();
 };
