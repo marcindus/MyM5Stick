@@ -1,5 +1,0 @@
-robotframework
-treelib
-pytest
-pytest-cov
-virtualenv
