@@ -209,10 +209,10 @@ void loop() {
 
 
 
- //   delay(1000); // wait for a second
- //   vTaskDelay(WIFI_CHANNEL_SWITCH_INTERVAL / portTICK_PERIOD_MS);
- //   wifi_sniffer_set_channel(channel);
- //   channel = (channel % WIFI_CHANNEL_MAX) + 1;
+    delay(1000); // wait for a second
+    vTaskDelay(WIFI_CHANNEL_SWITCH_INTERVAL / portTICK_PERIOD_MS);
+    wifi_sniffer_set_channel(channel);
+    channel = (channel % WIFI_CHANNEL_MAX) + 1;
 
 
 
