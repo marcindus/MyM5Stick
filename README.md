@@ -5,4 +5,4 @@ pio run
 pio run --target upload
 
 ## Monitor
-pio device monitor -b 11500
+pio device monitor -b 115200
