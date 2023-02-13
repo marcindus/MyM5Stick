@@ -169,11 +169,15 @@ void promisc_cb(uint8_t *buf, uint16_t len)
 {
   int i = 0;
   uint16_t seq_n_new = 0;
-  if (len == 12) {
+  if (len == 12) 
+  {
     struct RxControl *sniffer = (struct RxControl*) buf;
-  } else if (len == 128) {
+  } 
+  else if (len == 128) 
+  {
     struct sniffer_buf2 *sniffer = (struct sniffer_buf2*) buf;
-    if ((sniffer->buf[0] == 0x80)) {
+    if ((sniffer->buf[0] == 0x80)) 
+    {
       struct beaconinfo beacon = parse_beacon(sniffer->buf, 112, sniffer->rx_ctrl.rssi);
       if (register_beacon(beacon) == 0) {
         print_beacon(beacon);
