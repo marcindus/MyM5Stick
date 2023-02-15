@@ -2,7 +2,7 @@
 #include <M5StickC.h>
 
 #include "freertos/FreeRTOS.h"
-#include "WifiSniffer.hpp"
+#include "SnifferWifi.hpp"
 
 int n;
 int ssidLength = 10;
@@ -93,12 +93,13 @@ void loop()
 {
     if (M5.BtnA.wasPressed())
     {
-        Search();
+        M5.Lcd.setCursor(45, 20);
+        M5.Lcd.printf("scanning");
+        wifi_sniffer_start();
     }
-
     if (M5.BtnB.wasPressed())
     {
-        Show(1);
+        wifi_sniffer_stop();
     }
 
     delay(1000);

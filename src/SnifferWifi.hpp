@@ -1,5 +1,16 @@
 #pragma once
 
+/*
+https://docs.m5stack.com/en/core/m5stickc
+https://carvesystems.com/news/writing-a-simple-esp8266-based-sniffer/
+https://blog.podkalicki.com/wp-content/uploads/2017/01/esp32_promiscuous_pkt_structure.jpeg
+https://github.com/SHA2017-badge/bpp/blob/master/esp32-recv/main/bpp_sniffer.c
+https://github.com/n0w/esp8266-simple-sniffer/blob/master/src/main.cpp
+
+Details about beacon frames: 
+    https://mrncciew.com/2014/10/08/802-11-mgmt-beacon-frame/
+*/
+
 #include "esp_wifi.h"
 #include "esp_wifi_types.h"
 #include "esp_system.h"
@@ -12,7 +23,7 @@
 
 uint8_t level = 0, channel = 1;
 
-static wifi_country_t wifi_country = {.cc = "CN", .schan = 1, .nchan = 13}; // Most recent esp32 library struct
+static wifi_country_t wifi_country = {.cc = "CN", .schan = 1, .nchan = 13};
 
 typedef struct
 {
@@ -82,6 +93,8 @@ typedef enum
 
 static esp_err_t event_handler(void* ctx, system_event_t* event);
 static void wifi_sniffer_init(void);
+static void wifi_sniffer_start(void);
+static void wifi_sniffer_stop(void);
 static void wifi_sniffer_set_channel(uint8_t channel);
 static const char* wifi_sniffer_packet_type2str(wifi_promiscuous_pkt_type_t type);
 static void wifi_sniffer_packet_handler(void* buff, wifi_promiscuous_pkt_type_t type);
@@ -98,12 +111,21 @@ void wifi_sniffer_init(void)
     ESP_ERROR_CHECK(esp_event_loop_init(event_handler, NULL));
     wifi_init_config_t cfg = WIFI_INIT_CONFIG_DEFAULT();
     ESP_ERROR_CHECK(esp_wifi_init(&cfg));
-    ESP_ERROR_CHECK(esp_wifi_set_country(&wifi_country)); /* set country for channel range [1, 13] */
+    ESP_ERROR_CHECK(esp_wifi_set_country(&wifi_country));
     ESP_ERROR_CHECK(esp_wifi_set_storage(WIFI_STORAGE_RAM));
     ESP_ERROR_CHECK(esp_wifi_set_mode(WIFI_MODE_NULL));
     ESP_ERROR_CHECK(esp_wifi_start());
+}
+
+void wifi_sniffer_start(void)
+{
     esp_wifi_set_promiscuous(true);
     esp_wifi_set_promiscuous_rx_cb(&wifi_sniffer_packet_handler);
+}
+
+void wifi_sniffer_stop(void)
+{
+    esp_wifi_set_promiscuous(true);
 }
 
 void wifi_sniffer_set_channel(uint8_t channel)
@@ -130,22 +152,18 @@ void wifi_sniffer_packet_handler(void* buff, wifi_promiscuous_pkt_type_t type)
     if (type != WIFI_PKT_MGMT)
         return;
 
-    // https://blog.podkalicki.com/wp-content/uploads/2017/01/esp32_promiscuous_pkt_structure.jpeg
     const wifi_promiscuous_pkt_t* ppkt = (wifi_promiscuous_pkt_t*)buff;
     const wifi_ieee80211_packet_t* ipkt = (wifi_ieee80211_packet_t*)ppkt->payload;
     const wifi_ieee80211_mac_hdr_t* hdr = &ipkt->hdr;
 
-    // From https://github.com/SHA2017-badge/bpp/blob/master/esp32-recv/main/bpp_sniffer.c
-    // https://github.com/n0w/esp8266-simple-sniffer/blob/master/src/main.cpp
     char ssid[32] = {0};
 
-    const wifi_header_frame_control_t* fctl = (wifi_header_frame_control_t*)&hdr->frame_ctrl;
+    const wifi_header_frame_control_t* fctl = 
+            (wifi_header_frame_control_t*)&hdr->frame_ctrl;
 
-    // Details about beacon frames: https://mrncciew.com/2014/10/08/802-11-mgmt-beacon-frame/
     if (fctl->subtype == BEACON)
-    { // beacon
+    { 
         wifi_beacon_hdr* beacon = (wifi_beacon_hdr*)ipkt->payload;
-
         if (beacon->tag_length >= 32)
         {
             strncpy(ssid, beacon->ssid, 31);
@@ -162,27 +180,28 @@ void wifi_sniffer_packet_handler(void* buff, wifi_promiscuous_pkt_type_t type)
                       wifi_sniffer_packet_type2str(type),
                       ppkt->rx_ctrl.channel,
                       ppkt->rx_ctrl.rssi,
-                      // ADDR1
+
                       hdr->addr1[0],
                       hdr->addr1[1],
                       hdr->addr1[2],
                       hdr->addr1[3],
                       hdr->addr1[4],
                       hdr->addr1[5],
-                      // ADDR2
+
                       hdr->addr2[0],
                       hdr->addr2[1],
                       hdr->addr2[2],
                       hdr->addr2[3],
                       hdr->addr2[4],
                       hdr->addr2[5],
-                      // ADDR3
+
                       hdr->addr3[0],
                       hdr->addr3[1],
                       hdr->addr3[2],
                       hdr->addr3[3],
                       hdr->addr3[4],
                       hdr->addr3[5]);
-        // addBeacon(ssid, ppkt->rx_ctrl.channel, ppkt->rx_ctrl.rssi);
     }
 }
+
+
