@@ -104,6 +104,8 @@ esp_err_t event_handler(void* ctx, system_event_t* event)
     return ESP_OK;
 }
 
+Beacons beacons{5};
+
 void wifi_sniffer_init(void)
 {
     nvs_flash_init();
@@ -172,6 +174,9 @@ void wifi_sniffer_packet_handler(void* buff, wifi_promiscuous_pkt_type_t type)
         {
             strncpy(ssid, beacon->ssid, beacon->tag_length);
         }
+        beacons.add(ppkt->rx_ctrl.rssi);
+
+/*
         Serial.printf("BEACON %s, ", ssid);
         Serial.printf("PACKET TYPE=%s, CHAN=%02d, RSSI=%02d,"
                       " SENDER=%02x:%02x:%02x:%02x:%02x:%02x,"
@@ -201,6 +206,7 @@ void wifi_sniffer_packet_handler(void* buff, wifi_promiscuous_pkt_type_t type)
                       hdr->addr3[3],
                       hdr->addr3[4],
                       hdr->addr3[5]);
+                      */
     }
 }
 

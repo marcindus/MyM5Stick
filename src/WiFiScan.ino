@@ -1,7 +1,10 @@
 #include <M5StickC.h>
 #include "freertos/FreeRTOS.h"
+#include "Beacon.hpp"
 #include "SnifferWifi.hpp"
 #include "Lcd.hpp"
+
+
 
 void setup()
 {
@@ -26,7 +29,7 @@ void loop()
     }
 
     delay(1000);
-    vTaskDelay(WIFI_CHANNEL_SWITCH_INTERVAL / portTICK_PERIOD_MS);
+    vTaskDelay(WIFI_CHANNEL_SWITCH_INTERVAL / portTICK_PERIOD_MS); //Sleep 500
     wifi_sniffer_set_channel(channel);
     channel = (channel % WIFI_CHANNEL_MAX) + 1;
 
