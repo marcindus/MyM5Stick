@@ -25,11 +25,16 @@ public:
 	}
 
 	void print_me() {
+
+        Serial.printf("rssi : count\n");
 		for (auto beacon : beacons) {
-            Serial.printf("rssi : count\n");
             Serial.printf("%d   : %d   \n", beacon.rssi, beacon.counter);
 		}
 	}
+
+    void clear() {
+        beacons.clear();
+    }
 
 private:
   int interval{0};
