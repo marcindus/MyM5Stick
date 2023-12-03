@@ -127,7 +127,7 @@ void wifi_sniffer_start(void)
 
 void wifi_sniffer_stop(void)
 {
-    esp_wifi_set_promiscuous(true);
+    esp_wifi_set_promiscuous(false);
 }
 
 void wifi_sniffer_set_channel(uint8_t channel)
